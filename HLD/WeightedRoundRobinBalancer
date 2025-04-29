@@ -1,0 +1,99 @@
+
+/** When should we use the Weighted Round Robin Load Balancing Algorithm?
+
+* When servers have different capacities or performance levels.
+* Ideal for environments where servers vary in resources (CPU, memory, etc.).
+* Useful when you want to maximize resource utilization across all servers.
+* Helps in preventing smaller servers from overloading while efficiently using larger servers.
+**/
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class WeightedRoundRobinBalancer {
+    private List<Server> servers;
+    private int currentIndex;
+    private int[] cumulativeWeights;
+    private int totalWeight;
+    private Random random;
+
+    WeightedRoundRobinBalancer(List<Server> servers) {
+        this.servers = servers;
+        this.currentIndex = 0;
+        this.cumulativeWeights = calculateCumulativeWeights(servers);
+        this.totalWeight = calculateTotalWeight(servers);
+        this.random = new Random();
+    }
+
+    private int calculateTotalWeight(List<Server> servers) {
+        int totalWeight = 0;
+        for (Server server : servers) {
+            totalWeight = totalWeight + server.getWeight();
+        }
+        return totalWeight;
+    }
+
+    private int[] calculateCumulativeWeights(List<Server> servers) {
+        int[] cumulativeWeights = new int[servers.size()];
+        cumulativeWeights[0] = servers.get(0).getWeight();
+        for (int i = 1; i < servers.size(); i++) {
+            cumulativeWeights[i] = cumulativeWeights[i - 1] + servers.get(i).getWeight();
+        }
+        return cumulativeWeights;
+    }
+
+    public Server getNextServer(){
+        /** it would generate random numbers from 0 to total weight so that we can select server **/
+        /** including total weight **/
+        int randomValue=random.nextInt(totalWeight);
+        for (int i=0;i<servers.size();i++){
+            if(randomValue<cumulativeWeights[i]){
+                currentIndex=i;
+                break;
+            }
+        }
+        return servers.get(currentIndex);
+    }
+
+    static class Server {
+        private String name;
+        private int weight;
+
+        public Server(String name, int weight) {
+            this.name = name;
+            this.weight = weight;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getWeight() {
+            return weight;
+        }
+
+        public void setWeight(int weight) {
+            this.weight = weight;
+        }
+    }
+
+    public static void main(String[] args) {
+        List<WeightedRoundRobinBalancer.Server> serverList=new ArrayList<>();
+        serverList.add(new WeightedRoundRobinBalancer.Server("Server1", 3));
+        serverList.add(new WeightedRoundRobinBalancer.Server("Server2", 2));
+        serverList.add(new WeightedRoundRobinBalancer.Server("Server3", 1));
+
+        WeightedRoundRobinBalancer weightedRoundRobinBalancer=new WeightedRoundRobinBalancer(serverList);
+        for (int i = 0; i < 10; i++) {
+            WeightedRoundRobinBalancer.Server nextServer = weightedRoundRobinBalancer.getNextServer();
+            System.out.println("Request " + (i + 1) + ": Routed to " + nextServer.getName());
+        }
+
+    }
+
+}
